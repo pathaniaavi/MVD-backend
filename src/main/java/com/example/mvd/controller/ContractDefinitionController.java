@@ -29,10 +29,15 @@ import com.example.mvd.Model.ContractDefinitionModel;
 @RequestMapping("/contract")
 public class ContractDefinitionController {
 
+    private String determinePort(String company) {
+        return "company1".equals(company) ? "9191" : "9192";
+    }
+
     @CrossOrigin(origins = "http://localhost:4200")
-    @PostMapping("/submitContract")
-    public ResponseEntity<String> submitContract(@Valid @RequestBody ContractDefinitionModel contractRequest) {
+    @PostMapping("/submitContract/{company}")
+    public ResponseEntity<String> submitContract(@PathVariable String company, @Valid @RequestBody ContractDefinitionModel contractRequest) {
         log.info("Received Contract Request: {}", contractRequest);
+        log.info("Company: {}", company);
 
         RestTemplate restTemplate = new RestTemplate();
 
@@ -42,7 +47,8 @@ public class ContractDefinitionController {
 
         HttpEntity<ContractDefinitionModel> requestEntity = new HttpEntity<>(contractRequest, headers);
 
-        String url = "http://localhost:9191/api/management/v2/contractdefinitions";
+        String port = determinePort(company);
+        String url = "http://localhost:" + port + "/api/management/v2/contractdefinitions";
 
         log.info("Sending POST request to URL: {}", url);
         log.info("Request Headers: {}", headers);
@@ -62,8 +68,10 @@ public class ContractDefinitionController {
     }
 
     @CrossOrigin(origins = "http://localhost:4200")
-    @PostMapping("/fetchContracts")
-    public ResponseEntity<String> fetchContracts() {
+    @PostMapping("/fetchContracts/{company}")
+    public ResponseEntity<String> fetchContracts(@PathVariable String company) {
+        log.info("Company: {}", company);
+
         RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
@@ -72,7 +80,8 @@ public class ContractDefinitionController {
 
         HttpEntity<String> requestEntity = new HttpEntity<>(headers);
 
-        String url = "http://localhost:9191/api/management/v2/contractdefinitions/request";
+        String port = determinePort(company);
+        String url = "http://localhost:" + port + "/api/management/v2/contractdefinitions/request";
 
         log.info("Sending POST request to URL: {}", url);
         log.info("Request Headers: {}", headers);
@@ -91,8 +100,10 @@ public class ContractDefinitionController {
     }
 
     @CrossOrigin(origins = "http://localhost:4200")
-    @DeleteMapping("/deleteContract/{id}")
-    public ResponseEntity<Object> deleteContract(@PathVariable("id") String id) {
+    @DeleteMapping("/deleteContract/{company}/{id}")
+    public ResponseEntity<Object> deleteContract(@PathVariable("company") String company, @PathVariable("id") String id) {
+        log.info("Company: {}", company);
+
         RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
@@ -101,17 +112,17 @@ public class ContractDefinitionController {
 
         HttpEntity<String> requestEntity = new HttpEntity<>(headers);
 
-        String url = "http://localhost:9191/api/management/v2/contractdefinitions/" + id;
+        String port = determinePort(company);
+        String url = "http://localhost:" + port + "/api/management/v2/contractdefinitions/" + id;
 
         try {
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.DELETE, requestEntity, String.class);
 
+            Map<String, String> responseBody = new HashMap<>();
             if (response.getStatusCode().is2xxSuccessful()) {
-                Map<String, String> responseBody = new HashMap<>();
                 responseBody.put("message", "Contract deleted successfully");
                 return ResponseEntity.ok(responseBody);
             } else {
-                Map<String, String> responseBody = new HashMap<>();
                 responseBody.put("message", "Failed to delete contract");
                 return ResponseEntity.status(response.getStatusCode()).body(responseBody);
             }

@@ -29,10 +29,15 @@ import com.example.mvd.Model.PolicyModel;
 @RequestMapping("/policy")
 public class PolicyController {
 
+    private String determinePort(String company) {
+        return "company1".equals(company) ? "9191" : "9192";
+    }
+
     @CrossOrigin(origins = "http://localhost:4200")
-    @PostMapping("/submitPolicy")
-    public ResponseEntity<String> submitPolicy(@Valid @RequestBody PolicyModel policyRequest) {
+    @PostMapping("/submitPolicy/{company}")
+    public ResponseEntity<String> submitPolicy(@PathVariable String company, @Valid @RequestBody PolicyModel policyRequest) {
         log.info("Received Policy Request: {}", policyRequest);
+        log.info("Company: {}", company);
 
         RestTemplate restTemplate = new RestTemplate();
 
@@ -42,7 +47,8 @@ public class PolicyController {
 
         HttpEntity<PolicyModel> requestEntity = new HttpEntity<>(policyRequest, headers);
 
-        String url = "http://localhost:9191/api/management/v2/policydefinitions";
+        String port = determinePort(company);
+        String url = "http://localhost:" + port + "/api/management/v2/policydefinitions";
 
         log.info("Sending POST request to URL: {}", url);
         log.info("Request Headers: {}", headers);
@@ -62,8 +68,10 @@ public class PolicyController {
     }
 
     @CrossOrigin(origins = "http://localhost:4200")
-    @PostMapping("/fetchPolicies")
-    public ResponseEntity<String> fetchPolicies() {
+    @PostMapping("/fetchPolicies/{company}")
+    public ResponseEntity<String> fetchPolicies(@PathVariable String company) {
+        log.info("Company: {}", company);
+
         RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
@@ -72,9 +80,10 @@ public class PolicyController {
 
         HttpEntity<String> requestEntity = new HttpEntity<>(headers);
 
-        String url = "http://localhost:9191/api/management/v2/policydefinitions/request";
+        String port = determinePort(company);
+        String url = "http://localhost:" + port + "/api/management/v2/policydefinitions/request";
 
-        log.info("Sending GET request to URL: {}", url);
+        log.info("Sending POST request to URL: {}", url);
         log.info("Request Headers: {}", headers);
 
         ResponseEntity<String> response;
@@ -91,8 +100,10 @@ public class PolicyController {
     }
 
     @CrossOrigin(origins = "http://localhost:4200")
-    @DeleteMapping("/deletePolicy/{id}")
-    public ResponseEntity<Object> deletePolicy(@PathVariable("id") String id) {
+    @DeleteMapping("/deletePolicy/{company}/{id}")
+    public ResponseEntity<Object> deletePolicy(@PathVariable("company") String company, @PathVariable("id") String id) {
+        log.info("Company: {}", company);
+
         RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
@@ -101,17 +112,17 @@ public class PolicyController {
 
         HttpEntity<String> requestEntity = new HttpEntity<>(headers);
 
-        String url = "http://localhost:9191/api/management/v2/policydefinitions/" + id;
+        String port = determinePort(company);
+        String url = "http://localhost:" + port + "/api/management/v2/policydefinitions/" + id;
 
         try {
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.DELETE, requestEntity, String.class);
 
+            Map<String, String> responseBody = new HashMap<>();
             if (response.getStatusCode().is2xxSuccessful()) {
-                Map<String, String> responseBody = new HashMap<>();
                 responseBody.put("message", "Policy deleted successfully");
                 return ResponseEntity.ok(responseBody);
             } else {
-                Map<String, String> responseBody = new HashMap<>();
                 responseBody.put("message", "Failed to delete policy");
                 return ResponseEntity.status(response.getStatusCode()).body(responseBody);
             }
