@@ -1,0 +1,104 @@
+package com.example.mvd.controller;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
+
+import lombok.extern.slf4j.Slf4j;
+
+import jakarta.validation.Valid;
+
+import com.example.mvd.Model.NegotiateModel;
+
+@Slf4j
+@RestController
+@RequestMapping("/negotiate")
+public class NegotiateController {
+
+    private String determinePort(String company) {
+        return "company1".equals(company) ? "9191" : "9192";
+    }
+
+    @CrossOrigin(origins = "http://localhost:4200")
+    @PostMapping("/contractnegotiations/{company}")
+    public ResponseEntity<String> submitNegotiation(@PathVariable String company, @Valid @RequestBody NegotiateModel negotiationRequest) {
+        log.info("Received Negotiation Request: {}", negotiationRequest);
+        log.info("Company: {}", company);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("x-api-key", "ApiKeyDefaultValue");
+
+        HttpEntity<NegotiateModel> requestEntity = new HttpEntity<>(negotiationRequest, headers);
+
+        String port = determinePort(company);
+        String url = "http://localhost:" + port + "/api/management/v2/contractnegotiations";
+
+        log.info("Sending POST request to URL: {}", url);
+        log.info("Request Headers: {}", headers);
+        log.info("Request Body: {}", negotiationRequest);
+
+        ResponseEntity<String> response;
+        try {
+            response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+        } catch (HttpClientErrorException e) {
+            log.error("Error Response Body: {}", e.getResponseBodyAsString());
+            throw e;
+        }
+
+        log.info("Received Response: {}", response.getBody());
+
+        return ResponseEntity.ok(response.getBody());
+    }
+
+
+    @CrossOrigin(origins = "http://localhost:4200")
+    @GetMapping("/contractnegotiations/{company}/{id}")
+    public ResponseEntity<String> submitNegotiation(@PathVariable("company") String company, @PathVariable("id") String id) {
+        log.info("Company: {}", company);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("x-api-key", "ApiKeyDefaultValue");
+
+        HttpEntity<String> requestEntity = new HttpEntity<>(headers);
+
+        String port = determinePort(company);
+        String url = "http://localhost:" + port + "/api/management/v2/contractnegotiations/" + id;
+
+        log.info("Sending GET request to URL: {}", url);
+        log.info("Request Headers: {}", headers);
+
+        ResponseEntity<String> response;
+        try {
+            response = restTemplate.exchange(url, HttpMethod.GET, requestEntity, String.class);
+        } catch (HttpClientErrorException e) {
+            log.error("Error Response Body: {}", e.getResponseBodyAsString());
+            throw e;
+        }
+
+        log.info("Received Response: {}", response.getBody());
+
+        return ResponseEntity.ok(response.getBody());
+    }
+
+}

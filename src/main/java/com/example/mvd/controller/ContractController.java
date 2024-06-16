@@ -27,7 +27,7 @@ import com.example.mvd.Model.ContractDefinitionModel;
 @Slf4j
 @RestController
 @RequestMapping("/contract")
-public class ContractDefinitionController {
+public class ContractController {
 
     private String determinePort(String company) {
         return "company1".equals(company) ? "9191" : "9192";
@@ -132,4 +132,69 @@ public class ContractDefinitionController {
             return ResponseEntity.status(500).body(responseBody);
         }
     }
+
+    @CrossOrigin(origins = "http://localhost:4200")
+    @PostMapping("/contractAgreements/{company}")
+    public ResponseEntity<String> fetchAllContractsAgreements(@PathVariable String company) {
+        log.info("Company: {}", company);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("x-api-key", "ApiKeyDefaultValue");
+
+        HttpEntity<String> requestEntity = new HttpEntity<>(headers);
+
+        String port = determinePort(company);
+        String url = "http://localhost:" + port + "/api/management/v2/contractagreements/request";
+
+        log.info("Sending POST request to URL: {}", url);
+        log.info("Request Headers: {}", headers);
+
+        ResponseEntity<String> response;
+        try {
+            response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+        } catch (HttpClientErrorException e) {
+            log.error("Error Response Body: {}", e.getResponseBodyAsString());
+            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+        }
+
+        log.info("Received Response: {}", response.getBody());
+
+        return ResponseEntity.ok(response.getBody());
+    }
+
+    @CrossOrigin(origins = "http://localhost:4200")
+    @PostMapping("/transferprocesses/{company}")
+    public ResponseEntity<String> createTransferRequest(@PathVariable String company) {
+        log.info("Company: {}", company);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("x-api-key", "ApiKeyDefaultValue");
+
+        HttpEntity<String> requestEntity = new HttpEntity<>(headers);
+
+        String port = determinePort(company);
+        String url = "http://localhost:" + port + "/api/management/v2/transferprocesses";
+
+        log.info("Sending POST request to URL: {}", url);
+        log.info("Request Headers: {}", headers);
+
+        ResponseEntity<String> response;
+        try {
+            response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+        } catch (HttpClientErrorException e) {
+            log.error("Error Response Body: {}", e.getResponseBodyAsString());
+            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+        }
+
+        log.info("Received Response: {}", response.getBody());
+
+        return ResponseEntity.ok(response.getBody());
+    }
+
 }
