@@ -20,7 +20,7 @@ public class PolicyModel {
     @JsonProperty("@id")
     private String id;
 
-    @JsonProperty("edc:policy")
+    @JsonProperty("policy")
     private EdcPolicy edcPolicy;
 
     @Data
